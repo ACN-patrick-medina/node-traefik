@@ -16,7 +16,8 @@
     "json2toml": "^2.2.0",
     "tar": "^6.1.0",
     "tempy": "^1.0.1",
-    "tmp": "^0.2.1"
+    "tmp": "^0.2.1",
+    "unzipper": "^0.10.11"
   },
   "devDependencies": {
     "@semantic-release/commit-analyzer": "^8.0.1",

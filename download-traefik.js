@@ -4,6 +4,7 @@ const downloadFile = require("./download-file")
 const path = require("path")
 const fs = require("fs")
 const tar = require("tar")
+const unzipper = require("unzipper")
 
 const getJSON = bent("json", {
   "User-Agent": "seveibar, node-traefik (an npm module)",
@@ -12,13 +13,16 @@ const getJSON = bent("json", {
 const platform = os.platform()
 const arch = os.arch()
 let osRelease = null
+let archiveType = 'tar'
 
 switch (platform) {
   case "win32":
-    osRelease = `win32.exe`
+    osRelease = `windows_386`
+    archiveType = 'zip'
     break
   case "win64":
-    osRelease = `win64.exe`
+    osRelease = `windows_amd64`
+    archiveType = 'zip'
     break
   case "darwin":
     osRelease = "darwin_amd64"
@@ -48,7 +52,7 @@ switch (platform) {
 const releaseVersionToUse = "2.4.9"
 
 module.exports = async () => {
-  const extractExePath = path.resolve(__dirname, "traefik") // TODO .exe
+  const extractExePath = path.resolve(__dirname, `traefik${archiveType === 'zip' ? '.exe' : ''}`)
   if (fs.existsSync(extractExePath)) return extractExePath
 
   // Get all the assets from the github release page
@@ -78,13 +82,19 @@ module.exports = async () => {
   }
 
   // Extract File
-  await tar.x({
-    file: downloadPath,
-  })
+  if (archiveType === 'zip') {
+    fs.createReadStream(downloadPath).pipe(unzipper.Extract({ path: __dirname }));
+  } else {
+    await tar.x({
+      file: downloadPath,
+    })
+    fs.chmodSync(extractExePath, 0o755)
+  }
+  
+  // Remove downloaded file
   fs.unlinkSync(downloadPath)
 
-  fs.chmodSync(extractExePath, 0o755)
-
+  // Return extracted file path
   return path.resolve(__dirname, extractExePath)
 }
 
